@@ -47,7 +47,9 @@ class Table:
     row_count: int
 
 
-def build_sample_db(seed: int = 42, n_customers: int = 120, n_orders: int = 600) -> sqlite3.Connection:
+def build_sample_db(
+    seed: int = 42, n_customers: int = 120, n_orders: int = 600
+) -> sqlite3.Connection:
     """Create the sample retail database. Same seed -> byte-identical data."""
     rng = random.Random(seed)
     conn = sqlite3.connect(":memory:", check_same_thread=False)
@@ -56,7 +58,12 @@ def build_sample_db(seed: int = 42, n_customers: int = 120, n_orders: int = 600)
     conn.executemany(
         "INSERT INTO customers VALUES (?, ?, ?, ?)",
         [
-            (i, f"Customer {i:03d}", rng.choice(REGIONS), str(start + timedelta(rng.randrange(365))))
+            (
+                i,
+                f"Customer {i:03d}",
+                rng.choice(REGIONS),
+                str(start + timedelta(rng.randrange(365))),
+            )
             for i in range(1, n_customers + 1)
         ],
     )

@@ -135,7 +135,9 @@ class SafeExecutor:
             if timed_out:
                 raise QueryTimeoutError(f"query exceeded {self.timeout_ms} ms") from exc
             if "not authorized" in str(exc) or "prohibited" in str(exc):
-                raise UnsafeQueryError("query touches a table or action that is not allowed") from exc
+                raise UnsafeQueryError(
+                    "query touches a table or action that is not allowed"
+                ) from exc
             raise UnsafeQueryError(f"query failed: {exc}") from exc
         finally:
             self.conn.set_authorizer(None)
