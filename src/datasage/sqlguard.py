@@ -100,7 +100,9 @@ class SafeExecutor:
         if action in (sqlite3.SQLITE_SELECT, _SQLITE_RECURSIVE):
             return sqlite3.SQLITE_OK
         if action == sqlite3.SQLITE_READ:
-            if arg1 is not None and arg1.lower() in self.allowed and db in ("main", None):
+            if not db:  # CTE / subquery column, not a stored table
+                return sqlite3.SQLITE_OK
+            if arg1 is not None and arg1.lower() in self.allowed and db == "main":
                 return sqlite3.SQLITE_OK
             return sqlite3.SQLITE_DENY
         if action == sqlite3.SQLITE_FUNCTION:
