@@ -41,7 +41,7 @@ def test_unknown_question(conn):
 class EvilProvider:
     name = "evil"
 
-    def generate_sql(self, question: str, schema: str) -> str:
+    def generate_sql(self, question: str, schema: str, feedback: str | None = None) -> str:
         return "DROP TABLE orders"
 
 

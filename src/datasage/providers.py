@@ -21,7 +21,9 @@ REVENUE = "SUM(oi.quantity * oi.unit_price)"
 class Provider(Protocol):
     name: str
 
-    def generate_sql(self, question: str, schema: str) -> str: ...
+    def generate_sql(self, question: str, schema: str, feedback: str | None = None) -> str:
+        """Return SQL. ``feedback`` carries the previous SQL and why it was rejected."""
+        ...
 
 
 @dataclass(frozen=True)
@@ -32,6 +34,38 @@ class Intent:
 
 
 INTENTS: tuple[Intent, ...] = (
+    Intent(
+        "signups_by_month",
+        (r"\b(signups?|sign[- ]ups?|new customers)\b",),
+        "SELECT substr(signup_date, 1, 7) AS month, COUNT(*) AS new_customers FROM customers "
+        "GROUP BY month ORDER BY month",
+    ),
+    Intent(
+        "orders_by_weekday",
+        (r"\b(weekday|day of (the )?week)\b",),
+        "SELECT CASE CAST(strftime('%w', order_date) AS INTEGER) WHEN 0 THEN 'Sun' "
+        "WHEN 1 THEN 'Mon' WHEN 2 THEN 'Tue' WHEN 3 THEN 'Wed' WHEN 4 THEN 'Thu' "
+        "WHEN 5 THEN 'Fri' ELSE 'Sat' END AS weekday, COUNT(*) AS orders FROM orders "
+        "GROUP BY strftime('%w', order_date) ORDER BY strftime('%w', order_date)",
+    ),
+    Intent(
+        "revenue_by_channel",
+        (r"\b(revenue|sales)\b.*\bchannel", r"\bchannel\b.*\b(revenue|sales)\b"),
+        f"SELECT o.channel, ROUND({REVENUE}, 2) AS revenue FROM orders o "
+        "JOIN order_items oi ON oi.order_id = o.id GROUP BY o.channel ORDER BY revenue DESC",
+    ),
+    Intent(
+        "items_per_order",
+        (r"\bitems per order\b", r"\bbasket size\b"),
+        "SELECT ROUND(AVG(n), 2) AS avg_items_per_order FROM "
+        "(SELECT order_id, SUM(quantity) AS n FROM order_items GROUP BY order_id)",
+    ),
+    Intent(
+        "revenue_by_product",
+        (r"\b(revenue|sales)\b.*\b(by|per) product\b",),
+        f"SELECT p.name, ROUND({REVENUE}, 2) AS revenue FROM order_items oi "
+        "JOIN products p ON p.id = oi.product_id GROUP BY p.id ORDER BY revenue DESC",
+    ),
     Intent(
         "revenue_by_month",
         (r"\b(month|monthly|trend|over time)\b",),
@@ -98,6 +132,16 @@ INTENTS: tuple[Intent, ...] = (
 _TOP_N = re.compile(r"\btop\s+(\d{1,3})\b")
 
 
+def _mentioned_table(question: str, schema: str) -> str | None:
+    """Find a schema table (e.g. an uploaded CSV) named in the question."""
+    words = set(re.findall(r"[a-z0-9_]+", question.lower()))
+    for line in schema.splitlines():
+        m = re.match(r"([a-z_][a-z0-9_]*)\(", line)
+        if m and m.group(1) in words:
+            return m.group(1)
+    return None
+
+
 class UnknownQuestionError(ValueError):
     """The mock provider has no intent for this question."""
 
@@ -114,9 +158,14 @@ class MockProvider:
                 return intent
         return None
 
-    def generate_sql(self, question: str, schema: str) -> str:
+    def generate_sql(self, question: str, schema: str, feedback: str | None = None) -> str:
         intent = self.match(question)
         if intent is None:
+            table = _mentioned_table(question, schema)
+            if table is not None:
+                if re.search(r"\b(how many|count|number of)\b", question.lower()):
+                    return f'SELECT COUNT(*) AS row_count FROM "{table}"'
+                return f'SELECT * FROM "{table}" LIMIT 20'
             raise UnknownQuestionError(
                 "the offline mock provider does not understand this question; try e.g. "
                 "'revenue by category', 'top 5 customers' or 'monthly revenue trend'"
@@ -150,16 +199,21 @@ class OpenAICompatibleProvider:
         self.model = model
         self.timeout = timeout
 
-    def generate_sql(self, question: str, schema: str) -> str:
+    def generate_sql(self, question: str, schema: str, feedback: str | None = None) -> str:
         headers = {"Authorization": f"Bearer {self.api_key}"} if self.api_key else {}
-        payload = {
-            "model": self.model,
-            "temperature": 0,
-            "messages": [
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": f"Schema:\n{schema}\n\nQuestion: {question}"},
-            ],
-        }
+        messages = [
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": f"Schema:\n{schema}\n\nQuestion: {question}"},
+        ]
+        if feedback:
+            messages.append(
+                {
+                    "role": "user",
+                    "content": f"Your previous SQL was rejected:\n{feedback}\n"
+                    "Return a corrected single read-only SELECT.",
+                }
+            )
+        payload = {"model": self.model, "temperature": 0, "messages": messages}
         resp = httpx.post(
             f"{self.base_url}/chat/completions", json=payload, headers=headers, timeout=self.timeout
         )
