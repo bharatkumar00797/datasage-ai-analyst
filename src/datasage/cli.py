@@ -7,6 +7,7 @@ import json
 import os
 import sys
 from collections.abc import Sequence
+from dataclasses import replace
 
 from datasage import __version__
 from datasage.analyst import Analyst
@@ -23,6 +24,20 @@ def _table(columns: list[str], rows: list[tuple[object, ...]]) -> str:
     lines = [" | ".join(v.ljust(w) for v, w in zip(row, widths, strict=True)) for row in cells]
     lines.insert(1, "-+-".join("-" * w for w in widths))
     return "\n".join(lines)
+
+
+def _serve(host: str, port: int, dev: bool) -> int:
+    import uvicorn
+
+    from datasage.api import create_app
+    from datasage.api.settings import ApiSettings
+
+    settings = ApiSettings.from_env()
+    if dev:
+        settings = replace(settings, dev_mode=True)
+    print(f"datasage {__version__} serving on http://{host}:{port} ({settings.access_mode})")
+    uvicorn.run(create_app(settings), host=host, port=port, log_level="info")
+    return 0
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -46,7 +61,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     ev = sub.add_parser("eval", help="run the execution-accuracy eval set")
     ev.add_argument("--json", action="store_true")
     ev.add_argument("--min-accuracy", type=float, default=1.0)
+    serve = sub.add_parser("serve", help="run the HTTP API and dashboard")
+    serve.add_argument("--host", default=os.environ.get("HOST", "127.0.0.1"))
+    serve.add_argument("--port", type=int, default=int(os.environ.get("PORT", "8000")))
+    serve.add_argument("--dev", action="store_true", help="no auth, full access (localhost only)")
     args = parser.parse_args(argv)
+    if args.command == "serve":
+        return _serve(args.host, args.port, args.dev)
 
     conn = build_sample_db()
     max_rows = int(os.environ.get("DATASAGE_MAX_ROWS", "500"))
