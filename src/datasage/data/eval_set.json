@@ -1,0 +1,17 @@
+[
+  {"question": "What is the total revenue?", "gold_sql": "SELECT ROUND(SUM(quantity * unit_price), 2), COUNT(DISTINCT order_id) FROM order_items"},
+  {"question": "How many orders do we have?", "gold_sql": "SELECT COUNT(*) FROM orders"},
+  {"question": "How many customers do we have?", "gold_sql": "SELECT COUNT(*) FROM customers"},
+  {"question": "Revenue by category", "gold_sql": "SELECT p.category, ROUND(SUM(oi.quantity * oi.unit_price), 2) AS r FROM order_items oi JOIN products p ON p.id = oi.product_id GROUP BY p.category ORDER BY r DESC"},
+  {"question": "Which region generates the most revenue?", "gold_sql": "SELECT c.region, ROUND(SUM(oi.quantity * oi.unit_price), 2) AS r FROM orders o JOIN customers c ON c.id = o.customer_id JOIN order_items oi ON oi.order_id = o.id GROUP BY c.region ORDER BY r DESC"},
+  {"question": "Show the monthly revenue trend", "gold_sql": "SELECT substr(o.order_date, 1, 7) AS m, ROUND(SUM(oi.quantity * oi.unit_price), 2) FROM orders o JOIN order_items oi ON oi.order_id = o.id GROUP BY m ORDER BY m"},
+  {"question": "Orders per channel", "gold_sql": "SELECT channel, COUNT(*) AS n FROM orders GROUP BY channel ORDER BY n DESC"},
+  {"question": "Revenue by channel", "gold_sql": "SELECT o.channel, ROUND(SUM(oi.quantity * oi.unit_price), 2) AS r FROM orders o JOIN order_items oi ON oi.order_id = o.id GROUP BY o.channel ORDER BY r DESC"},
+  {"question": "Top 3 customers by revenue", "gold_sql": "SELECT c.name, c.region, ROUND(SUM(oi.quantity * oi.unit_price), 2) AS r FROM orders o JOIN customers c ON c.id = o.customer_id JOIN order_items oi ON oi.order_id = o.id GROUP BY c.id ORDER BY r DESC LIMIT 3"},
+  {"question": "Best selling products", "gold_sql": "SELECT p.name, p.category, SUM(oi.quantity) AS u, ROUND(SUM(oi.quantity * oi.unit_price), 2) FROM order_items oi JOIN products p ON p.id = oi.product_id GROUP BY p.id ORDER BY u DESC LIMIT 5"},
+  {"question": "Revenue by product", "gold_sql": "SELECT p.name, ROUND(SUM(oi.quantity * oi.unit_price), 2) AS r FROM order_items oi JOIN products p ON p.id = oi.product_id GROUP BY p.id ORDER BY r DESC"},
+  {"question": "What is the average order value?", "gold_sql": "SELECT ROUND(AVG(t), 2) FROM (SELECT order_id, SUM(quantity * unit_price) AS t FROM order_items GROUP BY order_id)"},
+  {"question": "Average items per order", "gold_sql": "SELECT ROUND(AVG(n), 2) FROM (SELECT order_id, SUM(quantity) AS n FROM order_items GROUP BY order_id)"},
+  {"question": "New customer signups by month", "gold_sql": "SELECT substr(signup_date, 1, 7) AS m, COUNT(*) FROM customers GROUP BY m ORDER BY m"},
+  {"question": "Orders by day of week", "gold_sql": "SELECT strftime('%w', order_date) AS d, COUNT(*) FROM orders GROUP BY d ORDER BY d", "compare": "last_column"}
+]
