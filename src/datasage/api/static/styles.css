@@ -1,0 +1,32 @@
+:root { --bg:#0f1419; --card:#18202a; --fg:#e6edf3; --muted:#8b98a5; --accent:#4cc2ff; --bad:#ff6b6b; --ok:#3ddc97; }
+* { box-sizing: border-box; }
+body { margin:0; font:14px/1.5 system-ui, sans-serif; background:var(--bg); color:var(--fg); }
+header { display:flex; justify-content:space-between; align-items:center; padding:14px 24px; border-bottom:1px solid #26313d; }
+h1 { margin:0; font-size:20px; } h2 { font-size:17px; margin:0 0 8px; } h3 { font-size:14px; margin:0 0 8px; }
+.sub { color:var(--muted); font-weight:400; font-size:14px; }
+.badge { padding:3px 10px; border-radius:12px; background:#223142; color:var(--accent); font-size:12px; }
+main { display:grid; grid-template-columns: minmax(0,2fr) minmax(260px,1fr); gap:16px; padding:16px 24px; }
+@media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+.card { background:var(--card); border:1px solid #26313d; border-radius:10px; padding:14px; margin-bottom:14px; }
+#keybar { margin:12px 24px 0; display:flex; gap:8px; align-items:center; }
+.row { display:flex; gap:8px; margin-top:6px; }
+input, textarea { width:100%; background:#0f1419; color:var(--fg); border:1px solid #33414f; border-radius:6px; padding:8px; font:inherit; margin-bottom:6px; }
+textarea { font-family: ui-monospace, monospace; }
+button { background:var(--accent); color:#06121b; border:0; border-radius:6px; padding:8px 14px; font-weight:600; cursor:pointer; }
+button.ghost { background:transparent; color:var(--muted); border:1px solid #33414f; }
+button:disabled { opacity:.5; cursor:wait; }
+.chips { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+.chips button { background:#223142; color:var(--fg); font-weight:400; padding:4px 10px; font-size:12px; }
+.hidden { display:none; } .muted { color:var(--muted); font-weight:400; font-size:12px; }
+.error { border-color:var(--bad); color:var(--bad); }
+pre { background:#0f1419; padding:10px; border-radius:6px; overflow:auto; white-space:pre-wrap; }
+.tablewrap { max-height:360px; overflow:auto; }
+table { border-collapse:collapse; width:100%; font-size:13px; }
+th, td { text-align:left; padding:4px 8px; border-bottom:1px solid #26313d; }
+th { position:sticky; top:0; background:var(--card); }
+td.num { text-align:right; font-variant-numeric: tabular-nums; }
+.attempt { font-size:12px; margin-top:6px; } .attempt.bad { color:var(--bad); } .attempt.good { color:var(--ok); }
+.metric { font-size:36px; font-weight:700; color:var(--accent); }
+svg text { fill: var(--muted); font-size:11px; }
+.tbl { margin-bottom:8px; } .tbl b { color:var(--accent); }
+footer { padding:0 24px 24px; }

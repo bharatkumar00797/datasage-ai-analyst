@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DataSage - AI Data Analyst</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+  <header>
+    <h1>DataSage <span class="sub">AI data analyst</span></h1>
+    <div id="mode" class="badge"></div>
+  </header>
+  <div id="keybar" class="card hidden">
+    <label for="apikey">API key</label>
+    <input id="apikey" type="password" autocomplete="off" placeholder="X-API-Key">
+    <button id="savekey" type="button">Use key</button>
+  </div>
+  <main>
+    <section class="left">
+      <div class="card">
+        <form id="askform">
+          <label for="question">Ask a question about the data</label>
+          <div class="row">
+            <input id="question" maxlength="500" placeholder="e.g. Revenue by category" required>
+            <button type="submit">Ask</button>
+          </div>
+        </form>
+        <div id="examples" class="chips"></div>
+      </div>
+      <div id="error" class="card error hidden"></div>
+      <div id="answer" class="hidden">
+        <div class="card">
+          <h2 id="summary"></h2>
+          <ul id="insights"></ul>
+        </div>
+        <div class="card">
+          <h3 id="charttitle">Chart</h3>
+          <div id="chart"></div>
+        </div>
+        <div class="card">
+          <h3>Results <span id="meta" class="muted"></span></h3>
+          <div class="tablewrap"><table id="results"></table></div>
+        </div>
+        <div class="card">
+          <h3>Generated SQL <span class="muted">(validated + executed read-only)</span></h3>
+          <pre id="sql"></pre>
+          <div id="attempts"></div>
+        </div>
+      </div>
+    </section>
+    <aside class="right">
+      <div class="card">
+        <h3>Run SQL</h3>
+        <textarea id="rawsql" rows="4" maxlength="4000">SELECT category, COUNT(*) AS products FROM products GROUP BY category</textarea>
+        <button id="runsql" type="button">Run through guard</button>
+      </div>
+      <div class="card">
+        <h3>Upload CSV</h3>
+        <input id="dsname" maxlength="40" placeholder="table name" value="my_data">
+        <input id="dsfile" type="file" accept=".csv,text/csv">
+        <button id="upload" type="button">Upload</button>
+        <button id="reset" type="button" class="ghost">Reset workspace</button>
+        <p id="uploadmsg" class="muted"></p>
+      </div>
+      <div class="card">
+        <h3>Schema</h3>
+        <div id="schema"></div>
+      </div>
+      <div class="card">
+        <h3>Eval</h3>
+        <button id="runeval" type="button">Run eval set</button>
+        <p id="evalmsg" class="muted"></p>
+      </div>
+    </aside>
+  </main>
+  <footer class="muted">The model only writes SQL; a guard enforces read-only SELECTs on allowlisted tables with row and time limits. Figures in insights are computed from the rows.</footer>
+</body>
+</html>
